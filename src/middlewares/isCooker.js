@@ -1,0 +1,12 @@
+// src/api/middlewares/isCooker.js
+
+import CustomError from '../utils/CustomError';
+
+const isCooker = (req, res, next) => {
+  if (req.user.role !== 'cooker') {
+    return next(new CustomError('User is not authorized to perform this action', 403));
+  }
+  next();
+};
+
+export default isCooker;

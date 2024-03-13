@@ -9,10 +9,10 @@ import morgan from 'morgan';
 // Local imports
 import { ENV } from './config/app.config';
 import corsOptions from './config/cors.config';
-import rateLimiter from './middleware/rateLimiter';
-import credentials from './middleware/credentials.js';
-import standardResponse from './middleware/stdRes.js';
-import standardError from './middleware/stdError';
+import rateLimiter from './middlewares/rateLimiter';
+import credentials from './middlewares/credentials.js';
+import standardResponse from './middlewares/stdRes.js';
+import standardError from './middlewares/stdError';
 import routes from './api/routes';
 import { connect, disconnect } from './config/db.config';
 import validateEnv from './utils/validateEnv';

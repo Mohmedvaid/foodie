@@ -1,4 +1,4 @@
-//  src/middleware/standardErr.js
+//  src/middlewares/standardErr.js
 import logger from '../services/logger';
 import CustomError from '../utils/CustomError';
 import { ENV } from '../config/app.config';

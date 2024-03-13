@@ -1,4 +1,4 @@
-// src/middleware/credentials.js
+// src/middlewares/credentials.js
 import allowedOrigins from '../config/origin.config';
 
 /**

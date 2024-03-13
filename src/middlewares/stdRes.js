@@ -1,4 +1,4 @@
-// src/middleware/standardRes.js
+// src/middlewares/standardRes.js
 
 /**
  * Middleware to standardize the response format

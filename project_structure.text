@@ -1,0 +1,32 @@
+- .babelrc
+- .env
+- .gitignore
+- .prettierrc
+- README.md
+- error.log
+- package-lock.json
+- package.json
+- src
+  - api
+    - controllers
+    - models
+    - routes
+      - index.js
+  - app.js
+  - config
+    - app.config.js
+    - cors.config.js
+    - db.config.js
+    - origin.config.js
+  - middleware
+    - credentials.js
+    - rateLimiter.js
+    - stdError.js
+    - stdRes.js
+  - server.js
+  - services
+    - logger.js
+  - utils
+    - CustomError.js
+    - validateEnv.js
+- tests
