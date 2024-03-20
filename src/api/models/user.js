@@ -6,7 +6,8 @@ import {
   JWT_SECRET,
   JWT_EXPIRATION,
   REFRESH_TOKEN_SECRET,
-  REFRESH_TOKEN_EXPIRATION
+  REFRESH_TOKEN_EXPIRATION,
+  USER_TYPES
 } from '../../config/app.config';
 
 const userSchema = new mongoose.Schema(
@@ -14,7 +15,8 @@ const userSchema = new mongoose.Schema(
     email: {
       type: String,
       required: true,
-      unique: true
+      unique: true,
+      index: true
     },
     password: {
       type: String,
@@ -31,7 +33,8 @@ const userSchema = new mongoose.Schema(
     role: {
       type: String,
       default: 'eater',
-      enum: ['eater', 'cooker']
+      enum: ['eater', 'cooker'], // TODO - remove hardcoding
+      index: true
     },
     isVerified: {
       type: Boolean,
@@ -76,6 +79,7 @@ userSchema.methods.comparePassword = async function (password) {
 };
 
 userSchema.methods.generateToken = function () {
+
   return jwt.sign(
     {
       id: this._id,
@@ -116,6 +120,19 @@ userSchema.methods.addRefreshToken = function (token) {
 userSchema.methods.removeRefreshToken = function (token) {
   this.refreshToken = this.refreshToken.filter((t) => t !== token);
   return this.save();
+};
+
+// create paginate static method
+userSchema.statics.paginate = async function (query, options) {
+  const { page, limit } = options;
+  const users = await this.find(query)
+    .skip((page - 1) * limit)
+    .limit(limit);
+  const total = await this.countDocuments(query);
+  return {
+    users,
+    total
+  };
 };
 
 export default mongoose.model('User', userSchema);

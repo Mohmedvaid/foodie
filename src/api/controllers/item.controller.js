@@ -6,7 +6,7 @@ import CustomError from '../../utils/CustomError';
 const createItem = async (req, res, next) => {
   try {
     const { title, description, price, category, cuisine, images } = req.body;
-    const cookerId = req.user.id; // Assuming 'req.user' is populated from the auth middleware
+    const cookerId = req.user.id;
 
     const newItem = new Item({
       title,

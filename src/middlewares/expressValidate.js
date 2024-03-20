@@ -1,4 +1,5 @@
 import { validationResult } from 'express-validator';
+import CustomError from '../utils/CustomError';
 
 const validate = (req, res, next) => {
   const errors = validationResult(req);

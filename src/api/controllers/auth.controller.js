@@ -6,7 +6,7 @@ const register = async (req, res, next) => {
   try {
     const { email, password, firstName, lastName } = req.body;
 
-    const existingUser = await User.findOne({ email });
+    const existingUser = await User.findOne({ email, role: 'eater' });
     if (existingUser) throw new CustomError('User already exists', 409);
 
     const user = new User({ email, password, firstName, lastName });
@@ -18,11 +18,51 @@ const register = async (req, res, next) => {
   }
 };
 
+const registerCooker = async (req, res, next) => {
+  try {
+    const { email, password, firstName, lastName } = req.body;
+
+    const existingUser = await User.findOne({ email, role: 'cooker' });
+
+    if (existingUser) throw new CustomError('Cooker already exists', 409);
+
+    const user = new User({ email, password, firstName, lastName, role: 'cooker' });
+    await user.save();
+
+    return res.standardResponse(
+      201,
+      true,
+      { userId: user._id },
+      'User successfully registered as a cooker'
+    );
+  } catch (error) {
+    return next(error);
+  }
+};
+
 const login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email, role: 'eater' });
 
+    if (!user || !(await user.comparePassword(password)))
+      throw new CustomError('Invalid email or password', 401);
+
+    const token = user.generateToken();
+    const refreshToken = await user.generateRefreshToken();
+
+    return res.standardResponse(200, true, { token, refreshToken }, 'User successfully logged in');
+  } catch (error) {
+    return next(error);
+  }
+};
+
+const loginCooker = async (req, res, next) => {
+  try {
+    const { email, password } = req.body;
+    const user = await User.findOne({ email, role: 'cooker' });
+
+    // not user or invalid pass or role array does not contain cooker role
     if (!user || !(await user.comparePassword(password)))
       throw new CustomError('Invalid email or password', 401);
 
@@ -58,4 +98,4 @@ const refreshToken = async (req, res, next) => {
   }
 };
 
-export { register, login, refreshToken };
+export { register, registerCooker, login, loginCooker, refreshToken };
