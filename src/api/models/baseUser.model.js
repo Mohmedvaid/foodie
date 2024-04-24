@@ -1,4 +1,4 @@
-// src/api/models/user.js
+// src/api/models/baseUser.js
 import mongoose from 'mongoose';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
@@ -6,11 +6,10 @@ import {
   JWT_SECRET,
   JWT_EXPIRATION,
   REFRESH_TOKEN_SECRET,
-  REFRESH_TOKEN_EXPIRATION,
-  USER_TYPES
+  REFRESH_TOKEN_EXPIRATION
 } from '../../config/app.config';
 
-const userSchema = new mongoose.Schema(
+const baseUserSchema = new mongoose.Schema(
   {
     email: {
       type: String,
@@ -30,17 +29,11 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true
     },
-    role: {
-      type: String,
-      default: 'eater',
-      enum: ['eater', 'cooker'], // TODO - remove hardcoding
-      index: true
-    },
+    refreshToken: [String],
     isVerified: {
       type: Boolean,
       default: false
-    },
-    refreshToken: [String]
+    }
   },
   {
     timestamps: true,
@@ -62,7 +55,7 @@ const userSchema = new mongoose.Schema(
   }
 );
 
-userSchema.pre('save', async function (next) {
+baseUserSchema.pre('save', async function (next) {
   if (!this.isModified('password')) return next();
 
   try {
@@ -74,28 +67,28 @@ userSchema.pre('save', async function (next) {
   }
 });
 
-userSchema.methods.comparePassword = async function (password) {
+// Compare password
+baseUserSchema.methods.comparePassword = async function (password) {
   return bcrypt.compare(password, this.password);
 };
 
-userSchema.methods.generateToken = function () {
-
+// Generate token
+baseUserSchema.methods.generateToken = function () {
   return jwt.sign(
     {
       id: this._id,
-      email: this.email,
-      role: this.role
+      email: this.email
     },
     JWT_SECRET,
     { expiresIn: JWT_EXPIRATION }
   );
 };
 
-userSchema.methods.generateRefreshToken = function () {
+// Generate refresh token
+baseUserSchema.methods.generateRefreshToken = function () {
   const payload = {
     id: this._id,
-    email: this.email,
-    role: this.role
+    email: this.email
   };
 
   const refToken = jwt.sign(payload, REFRESH_TOKEN_SECRET, { expiresIn: REFRESH_TOKEN_EXPIRATION });
@@ -104,35 +97,20 @@ userSchema.methods.generateRefreshToken = function () {
   return refToken;
 };
 
-userSchema.methods.verifyToken = function (token) {
+// Verify token
+baseUserSchema.methods.verifyToken = function (token) {
   return jwt.verify(token, JWT_SECRET);
 };
 
-userSchema.methods.verifyRefreshToken = function (token) {
+// Verify refresh token
+baseUserSchema.methods.verifyRefreshToken = function (token) {
   return jwt.verify(token, REFRESH_TOKEN_SECRET);
 };
 
-userSchema.methods.addRefreshToken = function (token) {
-  this.refreshToken.push(token);
-  return this.save();
+// Remove refresh token from user's list of refresh tokens
+baseUserSchema.removeRefreshToken = function (token) {
+  this.refreshToken = this.refreshToken.filter((refToken) => refToken !== token);
+  this.save();
 };
 
-userSchema.methods.removeRefreshToken = function (token) {
-  this.refreshToken = this.refreshToken.filter((t) => t !== token);
-  return this.save();
-};
-
-// create paginate static method
-userSchema.statics.paginate = async function (query, options) {
-  const { page, limit } = options;
-  const users = await this.find(query)
-    .skip((page - 1) * limit)
-    .limit(limit);
-  const total = await this.countDocuments(query);
-  return {
-    users,
-    total
-  };
-};
-
-export default mongoose.model('User', userSchema);
+export default baseUserSchema;

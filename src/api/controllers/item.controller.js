@@ -1,6 +1,6 @@
 // src/api/controllers/item.controller.js
 
-import Item from '../models/item';
+import Item from '../models/item.model';
 import CustomError from '../../utils/CustomError';
 
 const createItem = async (req, res, next) => {

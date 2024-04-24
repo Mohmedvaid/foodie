@@ -1,15 +1,18 @@
 // src/api/controllers/auth.controller.js
-import User from '../models/user';
+import Eater from '../models/eater.model';
+import Cooker from '../models/cooker.model';
 import CustomError from '../../utils/CustomError';
+import jwt from 'jsonwebtoken';
+import { REFRESH_TOKEN_SECRET } from '../../config/app.config';
 
-const register = async (req, res, next) => {
+const registerEater = async (req, res, next) => {
   try {
     const { email, password, firstName, lastName } = req.body;
 
-    const existingUser = await User.findOne({ email, role: 'eater' });
+    const existingUser = await Eater.findOne({ email });
     if (existingUser) throw new CustomError('User already exists', 409);
 
-    const user = new User({ email, password, firstName, lastName });
+    const user = new Eater({ email, password, firstName, lastName });
     await user.save();
 
     return res.standardResponse(201, true, { userId: user._id }, 'User successfully registered');
@@ -22,11 +25,11 @@ const registerCooker = async (req, res, next) => {
   try {
     const { email, password, firstName, lastName } = req.body;
 
-    const existingUser = await User.findOne({ email, role: 'cooker' });
+    const existingUser = await Cooker.findOne({ email });
 
     if (existingUser) throw new CustomError('Cooker already exists', 409);
 
-    const user = new User({ email, password, firstName, lastName, role: 'cooker' });
+    const user = new Cooker({ email, password, firstName, lastName, role: 'cooker' });
     await user.save();
 
     return res.standardResponse(
@@ -40,10 +43,10 @@ const registerCooker = async (req, res, next) => {
   }
 };
 
-const login = async (req, res, next) => {
+const loginEater = async (req, res, next) => {
   try {
     const { email, password } = req.body;
-    const user = await User.findOne({ email, role: 'eater' });
+    const user = await Eater.findOne({ email });
 
     if (!user || !(await user.comparePassword(password)))
       throw new CustomError('Invalid email or password', 401);
@@ -60,7 +63,7 @@ const login = async (req, res, next) => {
 const loginCooker = async (req, res, next) => {
   try {
     const { email, password } = req.body;
-    const user = await User.findOne({ email, role: 'cooker' });
+    const user = await Cooker.findOne({ email });
 
     // not user or invalid pass or role array does not contain cooker role
     if (!user || !(await user.comparePassword(password)))
@@ -78,8 +81,16 @@ const loginCooker = async (req, res, next) => {
 const refreshToken = async (req, res, next) => {
   try {
     const { refreshToken } = req.body;
-    const payload = User.verifyRefreshToken(refreshToken);
-    const user = await User.findById(payload.id);
+    const payload = jwt.verify(refreshToken, REFRESH_TOKEN_SECRET);
+    //User.verifyRefreshToken(refreshToken);
+    if (!payload) throw new CustomError('Invalid refresh token', 401);
+
+    let model = null;
+    if (payload.type === 'eater') model = Eater;
+    if (payload.type === 'cooker') model = Cooker;
+    if (!model) throw new CustomError('Invalid refresh token', 401);
+
+    const user = await model.findOne({ _id: payload.id });
 
     if (!user || !user.refreshToken.includes(refreshToken))
       throw new CustomError('Invalid refresh token', 401);
@@ -98,4 +109,4 @@ const refreshToken = async (req, res, next) => {
   }
 };
 
-export { register, registerCooker, login, loginCooker, refreshToken };
+export { registerEater, registerCooker, loginEater, loginCooker, refreshToken };
